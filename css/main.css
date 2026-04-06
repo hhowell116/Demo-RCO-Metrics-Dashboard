@@ -507,12 +507,13 @@ body {
 
 .app-shell {
   display: flex;
-  height: 100vh;
+  height: calc(100vh - 28px);
 }
 
 .content-area {
   flex: 1;
-  height: 100vh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .iframe-wrapper {
