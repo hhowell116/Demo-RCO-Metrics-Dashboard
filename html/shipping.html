@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Daily ShipStation Leaderboard</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body class="page-shipping">
+  <div class="wrap">
+    <div class="header" role="banner">
+
+  <div class="header-center">
+    <div class="title">Today's Shipping Leaderboard</div>
+    <div id="weekRange" class="meta">Week: loading...</div>
+  </div>
+
+  <button class="fullscreen-btn" id="fullscreenBtn" title="Fullscreen" aria-label="Fullscreen">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9 4H4v5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15 4h5v5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M9 20H4v-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15 20h5v-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+</div>
+
+    <div id="boards" class="boards" aria-live="polite">
+      <div class="notice">Loading data...</div>
+    </div>
+  </div>
+
+  <div id="debug" style="display:none"></div>
+
+<script>
+(async function(){
+  // Demo mode: static sample data (Google Sheets CSV removed)
+  const demoData = {
+    'Full-time': [
+      {rank:'1',employee:'Sarah Johnson',products:'342',orders:'48',avg:'7.1'},
+      {rank:'2',employee:'Mike Rivera',products:'298',orders:'41',avg:'7.3'},
+      {rank:'3',employee:'Emily Chen',products:'275',orders:'39',avg:'7.1'},
+      {rank:'4',employee:'David Martinez',products:'241',orders:'35',avg:'6.9'},
+      {rank:'5',employee:'Jessica Williams',products:'218',orders:'32',avg:'6.8'},
+      {rank:'6',employee:'Brandon Lee',products:'195',orders:'28',avg:'7.0'},
+      {rank:'7',employee:'Amanda Taylor',products:'172',orders:'25',avg:'6.9'},
+    ],
+    'Part-Time': [
+      {rank:'1',employee:'Chris Anderson',products:'156',orders:'22',avg:'7.1'},
+      {rank:'2',employee:'Katie Brown',products:'134',orders:'19',avg:'7.1'},
+      {rank:'3',employee:'Tyler Scott',products:'112',orders:'16',avg:'7.0'},
+      {rank:'4',employee:'Rachel Green',products:'98',orders:'14',avg:'7.0'},
+    ],
+    'Wholesale': [
+      {rank:'1',employee:'Lisa Morgan',products:'89',orders:'12',avg:'7.4'},
+      {rank:'2',employee:'Jake Thompson',products:'67',orders:'9',avg:'7.4'},
+      {rank:'3',employee:'Nina Patel',products:'45',orders:'6',avg:'7.5'},
+    ]
+  };
+
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'TV_VIEW_STATE') {
+    document.body.classList.toggle('tv-view-active', event.data.active);
+  }
+});
+
+  function nice(x){
+    if(!x) return '';
+    const n = Number(x.toString().replace(/[,]/g,''));
+    return Number.isFinite(n) ? n.toLocaleString() : x;
+  }
+
+  function buildCard(title,color,rows){
+    const head = `<div class="card-head">${title.toUpperCase()}</div>`;
+
+    const validRows = rows.filter(r => {
+      const hasEmployee = r.employee && r.employee.trim() !== '';
+      const hasOrders = r.orders && r.orders !== '0' && r.orders.trim() !== '';
+      const hasProducts = r.products && r.products !== '0' && r.products.trim() !== '';
+      return hasEmployee && (hasOrders || hasProducts);
+    });
+
+    if(!validRows || validRows.length === 0) {
+      return `<div class="card" style="display:none;" data-category="${title}"></div>`;
+    }
+
+    const rowsHtml = validRows.map((r,idx)=>{
+      const cls = idx===0? 'medal-gold' : idx===1? 'medal-silver' : idx===2? 'medal-bronze' : '';
+      const displayRank = (idx + 1).toString();
+      const fullName = (r.employee || '').trim();
+      let employeeName = fullName;
+      if(fullName.length > 15) {
+        const nameParts = fullName.split(/\s+/);
+        if(nameParts.length >= 2) {
+          const firstName = nameParts.slice(0, -1).join(' ');
+          const lastName = nameParts[nameParts.length - 1];
+          employeeName = `${firstName}<br>${lastName}`;
+        }
+      }
+      return `<tr class="${cls}"><td class="col-rank">${displayRank}</td><td class="col-employee">${employeeName}</td><td class="col-prod">${nice(r.products)}</td><td class="col-orders">${nice(r.orders)}</td><td class="col-avg">${r.avg||''}</td></tr>`;
+    }).join('');
+
+    return `
+      <div class="card" data-category="${title}">
+        ${head}
+        <div class="card-body">
+          <div class="table-container">
+            <table class="header-table">
+              <thead>
+                <tr>
+                  <th class="col-rank">Rank</th>
+                  <th class="col-employee">Employee</th>
+                  <th class="col-prod">Products</th>
+                  <th class="col-orders">Orders</th>
+                  <th class="col-avg">Avg<br>Item/Order</th>
+                </tr>
+              </thead>
+            </table>
+            <div class="scroll-wrapper">
+              <div class="scroll-content">
+                <table class="body-table">
+                  <tbody>${rowsHtml}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  try{
+    // Demo mode: use static data
+    document.getElementById('weekRange').textContent = 'Week: Apr 1 - Apr 6, 2025 (Demo Data)';
+
+    const cats = ['Full-time','Part-Time','Wholesale'];
+    const cols = {'Full-time':'var(--tan-light)','Part-Time':'var(--tan-light)','Wholesale':'var(--tan-light)'};
+    const boards = document.getElementById('boards');
+    boards.innerHTML = '';
+
+    for(let i=0;i<3;i++){
+      const rows = demoData[cats[i]] || [];
+      boards.insertAdjacentHTML('beforeend', buildCard(cats[i], cols[cats[i]], rows));
+    }
+
+    const visibleCards = boards.querySelectorAll('.card:not([style*="display:none"])');
+    log(`Visible cards: ${visibleCards.length}`);
+    if(visibleCards.length === 2) {
+      boards.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    } else if(visibleCards.length === 1) {
+      boards.style.gridTemplateColumns = '1fr';
+      visibleCards[0].style.maxWidth = '800px';
+      visibleCards[0].style.margin = '0 auto';
+    }
+
+    function startAutoScrollWhenReady() {
+  let startedAny = false;
+
+  document.querySelectorAll('.scroll-wrapper').forEach(wrapper => {
+    if (wrapper.dataset.started) return;
+
+    const scrollContent = wrapper.querySelector('.scroll-content');
+    if (!scrollContent) return;
+
+    const wrapperHeight = wrapper.getBoundingClientRect().height;
+    const contentHeight = scrollContent.getBoundingClientRect().height;
+
+    if (wrapperHeight === 0 || contentHeight === 0) return;
+    if (contentHeight <= wrapperHeight) return;
+
+    wrapper.dataset.started = 'true';
+    startedAny = true;
+
+    let position = 0;
+    let direction = 1;
+    const scrollSpeed = 30;
+    const maxScroll = contentHeight - wrapperHeight;
+    const pauseDuration = 2500;
+    let lastTime = performance.now();
+    let isPaused = false;
+    let pauseStartTime = 0;
+
+    function animate(currentTime) {
+      if (isPaused) {
+        if (currentTime - pauseStartTime >= pauseDuration) {
+          isPaused = false;
+          lastTime = currentTime;
+        } else {
+          requestAnimationFrame(animate);
+          return;
+        }
+      }
+
+      const deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+
+      position += scrollSpeed * deltaTime * direction;
+
+      if (direction === 1 && position >= maxScroll) {
+        position = maxScroll;
+        direction = -1;
+        isPaused = true;
+        pauseStartTime = currentTime;
+      } else if (direction === -1 && position <= 0) {
+        position = 0;
+        direction = 1;
+        isPaused = true;
+        pauseStartTime = currentTime;
+      }
+
+      scrollContent.style.transform = `translateY(-${position}px)`;
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  });
+
+  if (!startedAny) {
+    requestAnimationFrame(startAutoScrollWhenReady);
+  }
+}
+
+    requestAnimationFrame(startAutoScrollWhenReady);
+
+  } catch(err){
+    log(`ERROR: ${err.message}`, true);
+    console.error(err);
+    document.getElementById('boards').innerHTML = `<div class="notice">Error loading data: ${err.message}</div>`;
+  }
+})();
+
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+fullscreenBtn.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+});
+
+document.addEventListener('fullscreenchange', () => {
+  if (document.fullscreenElement) {
+    fullscreenBtn.classList.add('exit');
+  } else {
+    fullscreenBtn.classList.remove('exit');
+  }
+});
+
+</script>
+  <script>
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'RCO_THEME') {
+    document.body.classList.toggle('dark', event.data.theme === 'dark');
+  }
+});
+</script>
+</body>
+</html>
