@@ -42,11 +42,19 @@ const monthlyPerformance = {
   '2025-10': [86, 5, 95, 3],   // Oct: pre-holiday
   '2025-11': [81, 8, 91, 6],   // Nov: Black Friday strain
   '2025-12': [78, 9, 88, 7],   // Dec: holiday overload
-  // 2026: continued growth, Q1 data
+  // 2026: continued growth, full year
   '2026-1':  [82, 6, 92, 5],   // Jan: new year recovery
   '2026-2':  [84, 5, 94, 4],   // Feb: steady improvement
   '2026-3':  [86, 5, 95, 3],   // Mar: strong Q1 finish
-  '2026-4':  [87, 4, 96, 2],   // Apr: hitting stride (partial month)
+  '2026-4':  [87, 4, 96, 2],   // Apr: hitting stride
+  '2026-5':  [85, 6, 94, 4],   // May: mothers day volume spike
+  '2026-6':  [88, 3, 97, 2],   // Jun: best month yet
+  '2026-7':  [86, 5, 95, 3],   // Jul: summer steady
+  '2026-8':  [87, 4, 96, 2],   // Aug: back to school
+  '2026-9':  [88, 3, 97, 2],   // Sep: excellent
+  '2026-10': [87, 4, 96, 3],   // Oct: pre-holiday prep
+  '2026-11': [82, 7, 92, 5],   // Nov: Black Friday crunch
+  '2026-12': [79, 9, 89, 7],   // Dec: holiday overload
 };
 
 function generateMonth(year, month, baseOrders, isWholesale) {
@@ -59,9 +67,6 @@ function generateMonth(year, month, baseOrders, isWholesale) {
   const wOffset7 = isWholesale ? -2 : 0;
 
   for (let d = 1; d <= days; d++) {
-    // For April 2026, only generate up to the 6th (current date)
-    if (year === 2026 && month === 4 && d > 6) break;
-
     const dow = new Date(year, month - 1, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
     let orders;
@@ -124,8 +129,8 @@ for (let m = 1; m <= 12; m++) {
   DEMO_KPI_DATA.wholesale.push(...generateMonth(2025, m, wBase, true));
 }
 
-// Generate 2026 data (Jan - Apr partial)
-for (let m = 1; m <= 4; m++) {
+// Generate 2026 data (full year)
+for (let m = 1; m <= 12; m++) {
   const rBase = Math.round(192 * retailSeasonal[m - 1]);
   const wBase = Math.round(61 * wholesaleSeasonal[m - 1]);
   DEMO_KPI_DATA.retail.push(...generateMonth(2026, m, rBase, false));
