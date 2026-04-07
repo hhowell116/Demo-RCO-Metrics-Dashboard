@@ -95,11 +95,17 @@ function generateMonth(year, month, baseOrders, isWholesale) {
 
     const f4 = Math.round(orders * parseFloat(rate4) / 100);
     const f7 = Math.round(orders * parseFloat(rate7) / 100);
+    const rem4 = orders - f4;
+    const rem7 = orders - f7;
     rows.push({
       date: `${month}/${d}/${year}`,
       orders,
       fulfilled_4day: f4,
       fulfilled_7day: f7,
+      rem4,
+      rem7,
+      rate4: parseFloat(rate4),
+      rate7: parseFloat(rate7),
       fill_rate_4day: rate4 + '%',
       fill_rate_7day: rate7 + '%',
     });
