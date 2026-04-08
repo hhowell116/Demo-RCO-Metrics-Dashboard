@@ -33,10 +33,6 @@
         <div class="stl-stat-label">Open Skip the Line</div>
       </div>
       <div class="stl-stat-card">
-        <div class="stl-stat-value stl-stat-warn" id="newCount">--</div>
-        <div class="stl-stat-label">New (Unfulfilled)</div>
-      </div>
-      <div class="stl-stat-card">
         <div class="stl-stat-value" id="partialCount">--</div>
         <div class="stl-stat-label">Partially Fulfilled</div>
       </div>
@@ -44,9 +40,6 @@
         <div class="stl-stat-value stl-stat-good" id="fulfilledToday">--</div>
         <div class="stl-stat-label">Fulfilled Today</div>
       </div>
-
-      <div class="stl-panel-title" style="margin-top:16px;">By Date</div>
-      <div class="stl-date-list" id="dateBreakdown"></div>
     </div>
   </div>
 </div>
@@ -56,7 +49,7 @@
 async function load() {
   try {
     const d = {
-      totalOpen: 14, newUnfulfilled: 8, partial: 6, fulfilledToday: 3,
+      totalOpen: 14, partial: 6, fulfilledToday: 3,
       orders: [
         {name:'#RCO-41205',date:'Apr 4, 2025',fulfillment:'Unfulfilled',payment:'Paid'},
         {name:'#RCO-41198',date:'Apr 4, 2025',fulfillment:'Unfulfilled',payment:'Paid'},
@@ -65,12 +58,10 @@ async function load() {
         {name:'#RCO-41160',date:'Apr 2, 2025',fulfillment:'Partially Fulfilled',payment:'Paid'},
         {name:'#RCO-41148',date:'Apr 2, 2025',fulfillment:'Unfulfilled',payment:'Paid'},
         {name:'#RCO-41132',date:'Apr 1, 2025',fulfillment:'Partially Fulfilled',payment:'Paid'},
-      ],
-      byDate: [{date:'Apr 4',count:2},{date:'Apr 3',count:3},{date:'Apr 2',count:4},{date:'Apr 1',count:5}]
+      ]
     };
 
     document.getElementById('totalOpen').textContent = (d.totalOpen || 0).toLocaleString();
-    document.getElementById('newCount').textContent = (d.newUnfulfilled || 0).toLocaleString();
     document.getElementById('partialCount').textContent = (d.partial || 0).toLocaleString();
     document.getElementById('fulfilledToday').textContent = (d.fulfilledToday || 0).toLocaleString();
 
@@ -84,15 +75,6 @@ async function load() {
         <td>${o.payment}</td>
       </tr>
     `).join('') || '<tr><td colspan="4" style="text-align:center;font-style:italic;">No open skip-the-line orders</td></tr>';
-
-    const dateList = document.getElementById('dateBreakdown');
-    const byDate = d.byDate || [];
-    dateList.innerHTML = byDate.map(row => `
-      <div class="stl-date-row">
-        <span class="stl-date-label">${row.date}</span>
-        <span class="stl-date-count">${row.count}</span>
-      </div>
-    `).join('') || '<div class="stl-date-row"><span style="font-style:italic;">No data</span></div>';
 
     document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   } catch(e) { console.error(e); }

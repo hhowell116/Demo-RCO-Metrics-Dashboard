@@ -14,19 +14,19 @@ const RCO_ROLES = {
     },
     'C-Suite': {
       level: 1,
-      dashboards: ['fulfillment', 'shipping', 'orders', 'international', 'daily-metrics', 'sales', 'top-products', 'unfulfilled', 'fulfillment-dashboard', 'skip-the-line'],
+      dashboards: ['weekly-overview', 'fulfillment', 'shipping', 'orders', 'international', 'daily-metrics', 'sales', 'top-products', 'unfulfilled', 'fulfillment-dashboard', 'skip-the-line'],
       canSeeRevenue: true,
       description: 'All operational dashboards',
     },
     'Director': {
       level: 2,
-      dashboards: ['fulfillment', 'shipping', 'orders', 'international', 'daily-metrics', 'sales', 'top-products', 'unfulfilled', 'fulfillment-dashboard', 'skip-the-line'],
+      dashboards: ['weekly-overview', 'fulfillment', 'shipping', 'orders', 'international', 'daily-metrics', 'sales', 'top-products', 'unfulfilled', 'fulfillment-dashboard', 'skip-the-line'],
       canSeeRevenue: false,
       description: 'All operational dashboards (no revenue/AOV)',
     },
     'Supervisor': {
       level: 3,
-      dashboards: ['fulfillment', 'shipping', 'orders', 'international', 'daily-metrics', 'sales', 'top-products', 'unfulfilled', 'fulfillment-dashboard', 'skip-the-line'],
+      dashboards: ['weekly-overview', 'fulfillment', 'shipping', 'orders', 'international', 'daily-metrics', 'sales', 'top-products', 'unfulfilled', 'fulfillment-dashboard', 'skip-the-line'],
       canSeeRevenue: false,
       description: 'All operational dashboards (no revenue/AOV)',
     },

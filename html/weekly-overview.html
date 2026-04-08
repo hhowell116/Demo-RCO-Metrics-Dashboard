@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Breakdown - RCO</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+body.page-weekly-overview {
+  font-family: "Avenir Next", Avenir, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(160deg, #f9f6f2 0%, #efe9e0 100%);
+  height: 100vh; overflow: hidden;
+}
+
+.wo-container {
+  height: 100vh; display: flex; flex-direction: column; padding: 14px; gap: 10px;
+}
+
+/* Header */
+.wo-header {
+  display: flex; justify-content: center; align-items: center; position: relative;
+  background: white; padding: 6px 20px; border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(95,75,60,0.12), 0 1px 3px rgba(95,75,60,0.08);
+  border: 1px solid rgba(141,129,115,0.12); flex-direction: column; flex-shrink: 0;
+}
+.wo-header h1 { font-family: "Noto Serif", Georgia, serif; font-size: 1.3em; color: #5f4b3c; margin: 0; }
+.wo-meta { font-size: 0.8em; color: #8d8173; }
+.wo-week-range { font-size: 0.9em; color: #5f4b3c; font-weight: 600; }
+.wo-header .fullscreen-btn { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); }
+
+/* Combined KPI row — grows to fill space */
+.wo-kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; flex: 1; }
+.wo-kpi-card {
+  background: white; border-radius: 10px; padding: 12px 8px; text-align: center;
+  box-shadow: 0 2px 8px rgba(95,75,60,0.08); border: 1px solid rgba(141,129,115,0.10);
+  display: flex; flex-direction: column; justify-content: center;
+}
+.wo-kpi-value { font-size: 2vw; font-weight: 700; color: #5f4b3c; }
+.wo-kpi-label { font-size: 0.75em; font-weight: 700; color: #8d8173; text-transform: uppercase; margin-bottom: 2px; }
+
+/* Retail / Wholesale — individual colored metric cards */
+.wo-channels {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1;
+}
+.wo-channel-col {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.wo-channel-title {
+  font-family: "Noto Serif", Georgia, serif; font-size: 1.15em; font-weight: 700;
+  text-align: center; padding: 8px 0; flex-shrink: 0; border-radius: 8px;
+  letter-spacing: 0.5px;
+}
+.wo-channel-title.retail {
+  color: #5f4b3c;
+  background: linear-gradient(135deg, #f5ede3 0%, #ebe3d6 100%);
+  border: 1px solid rgba(171,144,113,0.25);
+}
+.wo-channel-title.wholesale {
+  color: #393d46;
+  background: linear-gradient(135deg, #ecedf1 0%, #e2e4ea 100%);
+  border: 1px solid rgba(57,61,70,0.15);
+}
+.wo-channel-cards {
+  flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+}
+.wo-ch-card {
+  border-radius: 8px; padding: 8px 6px; text-align: center;
+  display: flex; flex-direction: column; justify-content: center;
+  box-shadow: 0 2px 6px rgba(95,75,60,0.06); border: 1px solid transparent;
+}
+/* Retail cards — warm cream/tan */
+.wo-ch-card.retail {
+  background: linear-gradient(135deg, #faf6f0 0%, #f2ece2 100%);
+  border-color: rgba(171,144,113,0.2);
+}
+.wo-ch-card.retail .wo-ch-val { color: #5f4b3c; }
+.wo-ch-card.retail .wo-ch-lbl { color: #8d8173; }
+
+/* Wholesale cards — cool slate/blue-gray */
+.wo-ch-card.wholesale {
+  background: linear-gradient(135deg, #f2f3f6 0%, #e8eaef 100%);
+  border-color: rgba(57,61,70,0.15);
+}
+.wo-ch-card.wholesale .wo-ch-val { color: #393d46; }
+.wo-ch-card.wholesale .wo-ch-lbl { color: #6b7080; }
+
+.wo-ch-val { font-size: 1.3em; font-weight: 700; }
+.wo-ch-lbl { font-size: 0.6em; font-weight: 600; text-transform: uppercase; margin-top: 1px; }
+.wo-ch-good { color: #5a8c5a !important; }
+.wo-ch-warn { color: #d4a05c !important; }
+.wo-ch-poor { color: #c67b7b !important; }
+
+body.dark.page-weekly-overview .wo-ch-good { color: #6fcf6f !important; }
+body.dark.page-weekly-overview .wo-ch-warn { color: #f0c070 !important; }
+body.dark.page-weekly-overview .wo-ch-poor { color: #f08080 !important; }
+
+/* Dark mode channel cards */
+body.dark.page-weekly-overview .wo-ch-card.retail {
+  background: linear-gradient(135deg, #2f3528 0%, #2a3024 100%) !important;
+  border-color: rgba(140,170,100,0.2) !important;
+}
+body.dark.page-weekly-overview .wo-ch-card.retail .wo-ch-val { color: #dce8d0 !important; }
+body.dark.page-weekly-overview .wo-ch-card.retail .wo-ch-lbl { color: #9aaa85 !important; }
+
+body.dark.page-weekly-overview .wo-ch-card.wholesale {
+  background: linear-gradient(135deg, #2e3138 0%, #282c33 100%) !important;
+  border-color: rgba(100,120,160,0.15) !important;
+}
+body.dark.page-weekly-overview .wo-ch-card.wholesale .wo-ch-val { color: #cdd2dc !important; }
+body.dark.page-weekly-overview .wo-ch-card.wholesale .wo-ch-lbl { color: #8890a0 !important; }
+
+body.dark.page-weekly-overview .wo-channel-title.retail {
+  color: #dce8d0 !important;
+  background: linear-gradient(135deg, #2f3528 0%, #2a3024 100%) !important;
+  border-color: rgba(140,170,100,0.2) !important;
+}
+body.dark.page-weekly-overview .wo-channel-title.wholesale {
+  color: #cdd2dc !important;
+  background: linear-gradient(135deg, #2e3138 0%, #282c33 100%) !important;
+  border-color: rgba(100,120,160,0.15) !important;
+}
+
+/* Tables row at the bottom — no stretch, sized to content */
+.wo-tables-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; flex-shrink: 0;
+}
+.wo-table-wrap {
+  background: white; border-radius: 10px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(95,75,60,0.08); border: 1px solid rgba(141,129,115,0.10);
+}
+.wo-table-header {
+  font-family: "Noto Serif", Georgia, serif; font-size: 0.9em; font-weight: 700;
+  color: #5f4b3c; padding: 7px 12px; border-bottom: 1px solid rgba(141,129,115,0.10);
+}
+.wo-table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+.wo-table thead { background: #5f4b3c; color: white; }
+.wo-table th { padding: 6px 10px; font-weight: 600; text-align: center; }
+.wo-table th.th-left { text-align: left; }
+.wo-table td { padding: 6px 10px; text-align: center; color: #5f4b3c; border-bottom: 1px solid rgba(141,129,115,0.06); }
+.wo-table td.td-left { text-align: left; }
+.wo-table tbody tr:nth-child(even) { background: #faf8f5; }
+.wo-table tbody tr:hover { background: #f2eee8; }
+.wo-table tfoot { background: #f4f2ee; font-weight: 700; }
+.wo-table tfoot td { border-top: 2px solid rgba(141,129,115,0.15); }
+
+.wo-loading { text-align: center; color: #8d8173; padding: 10px; font-size: 0.85em; }
+
+/* ========== DARK MODE ========== */
+body.dark.page-weekly-overview { background: var(--dk-bg) !important; }
+body.dark.page-weekly-overview .wo-header,
+body.dark.page-weekly-overview .wo-kpi-card,
+body.dark.page-weekly-overview .wo-table-wrap {
+  background: var(--dk-card) !important; border-color: var(--dk-border) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+}
+body.dark.page-weekly-overview .wo-header h1,
+body.dark.page-weekly-overview .wo-week-range,
+body.dark.page-weekly-overview .wo-kpi-value,
+body.dark.page-weekly-overview .wo-table-header,
+body.dark.page-weekly-overview .wo-table td,
+body.dark.page-weekly-overview .wo-table tfoot td {
+  color: var(--dk-text) !important;
+}
+body.dark.page-weekly-overview .wo-meta,
+body.dark.page-weekly-overview .wo-kpi-label,
+body.dark.page-weekly-overview .wo-loading {
+  color: var(--dk-muted) !important;
+}
+body.dark.page-weekly-overview .wo-table thead { background: #3b332c !important; }
+body.dark.page-weekly-overview .wo-table tfoot { background: var(--dk-surface) !important; }
+body.dark.page-weekly-overview .wo-table tbody tr:nth-child(even) { background: var(--dk-surface) !important; }
+body.dark.page-weekly-overview .wo-table tbody tr:hover { background: var(--dk-hover) !important; }
+body.dark.page-weekly-overview .wo-table td,
+body.dark.page-weekly-overview .wo-table tfoot td { border-color: var(--dk-border) !important; }
+body.dark.page-weekly-overview .wo-table-header { border-bottom-color: var(--dk-border) !important; }
+</style>
+</head>
+
+<body class="page-weekly-overview">
+
+<div class="wo-container">
+
+  <div class="wo-header">
+    <h1>Weekly Breakdown</h1>
+    <div class="wo-week-range" id="weekRange">Loading...</div>
+    <button class="fullscreen-btn" id="fullscreenBtn" title="Fullscreen" aria-label="Fullscreen">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4H4v5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 4h5v5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 20H4v-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 20h5v-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <!-- Retail / Wholesale Detailed Channels -->
+  <div class="wo-channels">
+    <div class="wo-channel-col">
+      <div class="wo-channel-title retail">Retail</div>
+      <div class="wo-channel-cards">
+        <div class="wo-ch-card retail"><div class="wo-ch-val" id="rRevenue">--</div><div class="wo-ch-lbl">Revenue</div></div>
+        <div class="wo-ch-card retail"><div class="wo-ch-val" id="rOrders">--</div><div class="wo-ch-lbl">Orders</div></div>
+        <div class="wo-ch-card retail"><div class="wo-ch-val" id="rAOV">--</div><div class="wo-ch-lbl">AOV</div></div>
+        <div class="wo-ch-card retail"><div class="wo-ch-val" id="rUnits">--</div><div class="wo-ch-lbl">Units</div></div>
+        <div class="wo-ch-card retail"><div class="wo-ch-val" id="rRevPerUnit">--</div><div class="wo-ch-lbl">Rev / Unit</div></div>
+        <div class="wo-ch-card retail"><div class="wo-ch-val" id="rUnitsPerOrder">--</div><div class="wo-ch-lbl">Units / Order</div></div>
+        <div class="wo-ch-card retail"><div class="wo-ch-val wo-ch-good" id="rRate4">--</div><div class="wo-ch-lbl">4-Day Fill</div></div>
+        <div class="wo-ch-card retail"><div class="wo-ch-val wo-ch-good" id="rRate7">--</div><div class="wo-ch-lbl">7-Day Fill</div></div>
+      </div>
+    </div>
+    <div class="wo-channel-col">
+      <div class="wo-channel-title wholesale">Wholesale</div>
+      <div class="wo-channel-cards">
+        <div class="wo-ch-card wholesale"><div class="wo-ch-val" id="wRevenue">--</div><div class="wo-ch-lbl">Revenue</div></div>
+        <div class="wo-ch-card wholesale"><div class="wo-ch-val" id="wOrders">--</div><div class="wo-ch-lbl">Orders</div></div>
+        <div class="wo-ch-card wholesale"><div class="wo-ch-val" id="wAOV">--</div><div class="wo-ch-lbl">AOV</div></div>
+        <div class="wo-ch-card wholesale"><div class="wo-ch-val" id="wUnits">--</div><div class="wo-ch-lbl">Units</div></div>
+        <div class="wo-ch-card wholesale"><div class="wo-ch-val" id="wRevPerUnit">--</div><div class="wo-ch-lbl">Rev / Unit</div></div>
+        <div class="wo-ch-card wholesale"><div class="wo-ch-val" id="wUnitsPerOrder">--</div><div class="wo-ch-lbl">Units / Order</div></div>
+        <div class="wo-ch-card wholesale"><div class="wo-ch-val wo-ch-good" id="wRate4">--</div><div class="wo-ch-lbl">4-Day Fill</div></div>
+        <div class="wo-ch-card wholesale"><div class="wo-ch-val wo-ch-good" id="wRate7">--</div><div class="wo-ch-lbl">7-Day Fill</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Combined KPI Summary -->
+  <div class="wo-kpi-row">
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Weekly Revenue</div><div class="wo-kpi-value" id="kpiRevenue">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Total Orders</div><div class="wo-kpi-value" id="kpiOrders">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Avg Order Value</div><div class="wo-kpi-value" id="kpiAOV">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Units Sold</div><div class="wo-kpi-value" id="kpiUnits">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Avg Daily Orders</div><div class="wo-kpi-value" id="kpiAvgDaily">--</div></div>
+  </div>
+
+  <!-- Fulfillment + Insights snapshot row -->
+  <div class="wo-kpi-row" style="grid-template-columns: repeat(8, 1fr);">
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Shipped Today</div><div class="wo-kpi-value wo-ch-good" id="todayFulfilled">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Shipped Yesterday</div><div class="wo-kpi-value" id="yesterdayFulfilled">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Unfulfilled</div><div class="wo-kpi-value wo-ch-warn" id="currentUnfulfilled">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Unfulfilled Units</div><div class="wo-kpi-value" id="unfulfilledUnits">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Skip the Line Open</div><div class="wo-kpi-value wo-ch-warn" id="stlOpen">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Avg Order Size</div><div class="wo-kpi-value" id="avgOrderSize">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Peak Day</div><div class="wo-kpi-value" id="peakDay" style="font-size:1.2vw">--</div></div>
+    <div class="wo-kpi-card"><div class="wo-kpi-label">Retail % of Revenue</div><div class="wo-kpi-value" id="retailPct">--</div></div>
+  </div>
+
+  <!-- Three equal tables at the bottom -->
+  <div class="wo-tables-row">
+    <div class="wo-table-wrap">
+      <div class="wo-table-header">Daily Breakdown</div>
+      <table class="wo-table">
+        <thead><tr><th class="th-left">Day</th><th>Orders</th><th>4-Day Fill</th></tr></thead>
+        <tbody id="dailyBody"><tr><td colspan="3" class="wo-loading">Loading...</td></tr></tbody>
+        <tfoot id="dailyFoot"></tfoot>
+      </table>
+    </div>
+    <div class="wo-table-wrap">
+      <div class="wo-table-header">Top 8 Products — Last 7 Days</div>
+      <table class="wo-table">
+        <thead><tr><th>#</th><th class="th-left">Product</th><th>Qty</th></tr></thead>
+        <tbody id="topProductsBody"><tr><td colspan="3" class="wo-loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="wo-table-wrap">
+      <div class="wo-table-header">Top 8 States — Last 7 Days</div>
+      <table class="wo-table">
+        <thead><tr><th>#</th><th class="th-left">State</th><th>Orders</th></tr></thead>
+        <tbody id="topStatesBody"><tr><td colspan="3" class="wo-loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Demo mode: static sample data (API calls removed)
+
+function fmt$(v) { return '$' + v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+function fmtN(v) { return v.toLocaleString(); }
+function fmtPct(v) { return v.toFixed(1) + '%'; }
+function ordinal(n) { const s = ['th','st','nd','rd']; const v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); }
+
+function fmtDateRange(start, end) {
+  const s = new Date(start + 'T12:00:00'), e = new Date(end + 'T12:00:00');
+  const sDay = s.getDate(), eDay = e.getDate();
+  const sMonth = s.toLocaleDateString('en-US', { month: 'short' });
+  const eMonth = e.toLocaleDateString('en-US', { month: 'short' });
+  const eYear = e.getFullYear();
+  return `${sMonth} ${ordinal(sDay)} \u2014 ${eMonth} ${ordinal(eDay)}, ${eYear}`;
+}
+
+function rateColor(val, prefix) {
+  const cls = val >= 95 ? 'wo-ch-good' : val >= 85 ? '' : val >= 70 ? 'wo-ch-warn' : 'wo-ch-poor';
+  return `wo-ch-val ${cls}`;
+}
+
+let _canSeeRevenue = true;
+function restrictRevenue() {
+  document.querySelectorAll('[data-revenue]').forEach(el => {
+    el.textContent = 'Restricted'; el.style.fontSize = '0.65em'; el.style.color = '#8d8173';
+  });
+}
+
+function productRows(list) {
+  return list.map(([name, qty], i) =>
+    `<tr><td>${i + 1}</td><td class="td-left" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${name}</td><td>${fmtN(qty)}</td></tr>`
+  ).join('');
+}
+
+async function loadWeeklyOverview() {
+  try {
+    // Demo mode: hardcoded sample data
+    const data = {
+      week: {
+        startDate: '2025-03-31',
+        endDate: '2025-04-06',
+        combined: { revenue: 87420.50, orders: 892, aov: 98.01, unitsSold: 3215 },
+        retail: { revenue: 62180.30, orders: 654, aov: 95.08, unitsSold: 2380 },
+        wholesale: { revenue: 25240.20, orders: 238, aov: 106.05, unitsSold: 835 }
+      },
+      kpi: {
+        retail: { avgRate4: 91.2, avgRate7: 97.8 },
+        wholesale: { avgRate4: 88.5, avgRate7: 95.3 },
+        retailDaily: [
+          { date: '3/31/2025', orders: 95, rate4: 90.5 },
+          { date: '4/1/2025', orders: 102, rate4: 92.1 },
+          { date: '4/2/2025', orders: 88, rate4: 89.7 },
+          { date: '4/3/2025', orders: 110, rate4: 93.6 },
+          { date: '4/4/2025', orders: 98, rate4: 91.8 },
+          { date: '4/5/2025', orders: 82, rate4: 88.4 },
+          { date: '4/6/2025', orders: 79, rate4: 90.2 }
+        ],
+        wholesaleDaily: [
+          { date: '3/31/2025', orders: 35 },
+          { date: '4/1/2025', orders: 38 },
+          { date: '4/2/2025', orders: 32 },
+          { date: '4/3/2025', orders: 42 },
+          { date: '4/4/2025', orders: 36 },
+          { date: '4/5/2025', orders: 28 },
+          { date: '4/6/2025', orders: 27 }
+        ]
+      },
+      fulfillmentDash: {
+        retailToday: 144, retailYesterday: 198,
+        wholesaleToday: 43, wholesaleYesterday: 54
+      },
+      unfulfilled: {
+        retail: { totalUnfulfilled: 42, totalUnits: 156 },
+        wholesale: { totalUnfulfilled: 18, totalUnits: 72 }
+      },
+      skipTheLine: { totalOpen: 14 },
+      topProducts: [
+        { name: 'Elderberry Syrup 16oz', qty: 312 },
+        { name: 'Sea Moss Gel - Original', qty: 248 },
+        { name: 'Tart Cherry Gummies', qty: 195 },
+        { name: 'Hair Growth Spritz', qty: 178 },
+        { name: 'Beet Root Powder', qty: 156 },
+        { name: 'Mushroom Complex Caps', qty: 134 },
+        { name: 'Vitamin D3 Drops', qty: 112 },
+        { name: 'Zinc Elderberry Gummies', qty: 98 }
+      ],
+      topStates: [
+        { state: 'TX', orders: 142 },
+        { state: 'CA', orders: 98 },
+        { state: 'FL', orders: 87 },
+        { state: 'NY', orders: 65 },
+        { state: 'GA', orders: 54 },
+        { state: 'NC', orders: 48 },
+        { state: 'OH', orders: 42 },
+        { state: 'PA', orders: 38 }
+      ]
+    };
+
+    const wk = data.week, c = wk.combined, r = wk.retail, w = wk.wholesale;
+
+    // Header
+    document.getElementById('weekRange').textContent = fmtDateRange(wk.startDate, wk.endDate);
+
+    // Use KPI daily data for accurate day count (sample breakdown is unreliable)
+    const kpi = data.kpi;
+    const kpiDays = (kpi.retailDaily || []).length || 7;
+
+    // Combined KPI cards
+    document.getElementById('kpiRevenue').textContent = fmt$(c.revenue);
+    document.getElementById('kpiRevenue').setAttribute('data-revenue', '1');
+    document.getElementById('kpiOrders').textContent = fmtN(c.orders);
+    document.getElementById('kpiAOV').textContent = fmt$(c.aov);
+    document.getElementById('kpiAOV').setAttribute('data-revenue', '1');
+    document.getElementById('kpiUnits').textContent = fmtN(c.unitsSold);
+    document.getElementById('kpiAvgDaily').textContent = fmtN(Math.round(c.orders / kpiDays));
+
+    // Retail channel
+    document.getElementById('rRevenue').textContent = fmt$(r.revenue);
+    document.getElementById('rRevenue').setAttribute('data-revenue', '1');
+    document.getElementById('rOrders').textContent = fmtN(r.orders);
+    document.getElementById('rAOV').textContent = fmt$(r.aov);
+    document.getElementById('rAOV').setAttribute('data-revenue', '1');
+    document.getElementById('rUnits').textContent = fmtN(r.unitsSold);
+    const rRPU = r.unitsSold > 0 ? r.revenue / r.unitsSold : 0;
+    document.getElementById('rRevPerUnit').textContent = fmt$(rRPU);
+    document.getElementById('rRevPerUnit').setAttribute('data-revenue', '1');
+    const rUPO = r.orders > 0 ? (r.unitsSold / r.orders).toFixed(1) : '0';
+    document.getElementById('rUnitsPerOrder').textContent = rUPO;
+
+    // Wholesale channel
+    document.getElementById('wRevenue').textContent = fmt$(w.revenue);
+    document.getElementById('wRevenue').setAttribute('data-revenue', '1');
+    document.getElementById('wOrders').textContent = fmtN(w.orders);
+    document.getElementById('wAOV').textContent = fmt$(w.aov);
+    document.getElementById('wAOV').setAttribute('data-revenue', '1');
+    document.getElementById('wUnits').textContent = fmtN(w.unitsSold);
+    const wRPU = w.unitsSold > 0 ? w.revenue / w.unitsSold : 0;
+    document.getElementById('wRevPerUnit').textContent = fmt$(wRPU);
+    document.getElementById('wRevPerUnit').setAttribute('data-revenue', '1');
+    const wUPO = w.orders > 0 ? (w.unitsSold / w.orders).toFixed(1) : '0';
+    document.getElementById('wUnitsPerOrder').textContent = wUPO;
+
+    // KPI fill rates per channel
+    if (kpi && kpi.retail) {
+      const el4 = document.getElementById('rRate4');
+      el4.textContent = fmtPct(kpi.retail.avgRate4);
+      el4.className = rateColor(kpi.retail.avgRate4);
+      const el7 = document.getElementById('rRate7');
+      el7.textContent = fmtPct(kpi.retail.avgRate7);
+      el7.className = rateColor(kpi.retail.avgRate7);
+    }
+    if (kpi && kpi.wholesale) {
+      const el4 = document.getElementById('wRate4');
+      el4.textContent = fmtPct(kpi.wholesale.avgRate4);
+      el4.className = rateColor(kpi.wholesale.avgRate4);
+      const el7 = document.getElementById('wRate7');
+      el7.textContent = fmtPct(kpi.wholesale.avgRate7);
+      el7.className = rateColor(kpi.wholesale.avgRate7);
+    }
+
+    // Fulfillment snapshot
+    const fd = data.fulfillmentDash;
+    if (fd) {
+      document.getElementById('todayFulfilled').textContent = fmtN((fd.retailToday || 0) + (fd.wholesaleToday || 0));
+      document.getElementById('yesterdayFulfilled').textContent = fmtN((fd.retailYesterday || 0) + (fd.wholesaleYesterday || 0));
+    }
+    const uf = data.unfulfilled;
+    if (uf) {
+      const ruf = uf.retail || {}, wuf = uf.wholesale || {};
+      document.getElementById('currentUnfulfilled').textContent = fmtN((ruf.totalUnfulfilled || 0) + (wuf.totalUnfulfilled || 0));
+      document.getElementById('unfulfilledUnits').textContent = fmtN((ruf.totalUnits || 0) + (wuf.totalUnits || 0));
+    }
+    const stl = data.skipTheLine;
+    if (stl) {
+      document.getElementById('stlOpen').textContent = fmtN(stl.totalOpen || 0);
+    }
+
+    // Avg order size (units per order)
+    const totalUnits = c.unitsSold || 0;
+    const totalOrders = c.orders || 1;
+    document.getElementById('avgOrderSize').textContent = (totalUnits / totalOrders).toFixed(1);
+
+    // Retail % of total revenue
+    const totalRev = c.revenue || 1;
+    document.getElementById('retailPct').textContent = (r.revenue / totalRev * 100).toFixed(1) + '%';
+    document.getElementById('retailPct').setAttribute('data-revenue', '1');
+
+    // Daily Breakdown table — use exact KPI data (not sample-based estimates)
+    // KPI daily rows have format: { date: "M/D/YYYY", orders: N, rem4, rem7, rate4, rate7 }
+    const kpiDaily = {};
+    for (const d of (kpi.retailDaily || [])) {
+      const parts = d.date.split("/");
+      const iso = `${parts[2]}-${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}`;
+      kpiDaily[iso] = { orders: d.orders, rate4: d.rate4 };
+    }
+    for (const d of (kpi.wholesaleDaily || [])) {
+      const parts = d.date.split("/");
+      const iso = `${parts[2]}-${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}`;
+      if (!kpiDaily[iso]) kpiDaily[iso] = { orders: 0, rate4: 0 };
+      kpiDaily[iso].orders += d.orders;
+    }
+    const dailyRows = Object.entries(kpiDaily).sort((a, b) => a[0].localeCompare(b[0]));
+    const tbody = document.getElementById('dailyBody'), tfoot = document.getElementById('dailyFoot');
+    if (dailyRows.length > 0) {
+      let tO = 0;
+      tbody.innerHTML = dailyRows.map(([date, d]) => {
+        tO += d.orders;
+        const dt = new Date(date + 'T12:00:00');
+        const dayName = dt.toLocaleDateString('en-US', { weekday: 'short' });
+        const mon = dt.toLocaleDateString('en-US', { month: 'short' });
+        const dayNum = dt.getDate();
+        return `<tr><td class="td-left">${dayName}, ${mon} ${ordinal(dayNum)}</td><td>${fmtN(d.orders)}</td><td>${fmtPct(d.rate4)}</td></tr>`;
+      }).join('');
+      tfoot.innerHTML = `<tr><td class="td-left">Total</td><td>${fmtN(tO)}</td><td></td></tr>`;
+    }
+
+    // Peak Day from KPI data
+    const peakEntry = dailyRows.sort((a, b) => b[1].orders - a[1].orders)[0];
+    if (peakEntry) {
+      const dt = new Date(peakEntry[0] + 'T12:00:00');
+      document.getElementById('peakDay').textContent = dt.toLocaleDateString('en-US', { weekday: 'short' }) + ' (' + fmtN(peakEntry[1].orders) + ')';
+    }
+
+    // Top Products — 7 Day cache
+    const tp = data.topProducts || [];
+    document.getElementById('topProductsBody').innerHTML = tp.length > 0
+      ? productRows(tp.slice(0, 8).map(p => [p.name, p.qty]))
+      : '<tr><td colspan="3" class="wo-loading">No data</td></tr>';
+
+    // Top States — YTD
+    const STATE_NAMES = {AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'Washington DC'};
+    const states = data.topStates || [];
+    const stBody = document.getElementById('topStatesBody');
+    if (states.length > 0) {
+      stBody.innerHTML = states.slice(0, 8).map((s, i) =>
+        `<tr><td>${i + 1}</td><td class="td-left">${STATE_NAMES[s.state] || s.state}</td><td>${fmtN(s.orders)}</td></tr>`
+      ).join('');
+    } else {
+      stBody.innerHTML = '<tr><td colspan="3" class="wo-loading">No data</td></tr>';
+    }
+
+    if (!_canSeeRevenue) restrictRevenue();
+
+  } catch (e) {
+    console.error('Failed to load weekly overview:', e);
+    document.getElementById('weekRange').textContent = 'Error loading data';
+  }
+}
+
+loadWeeklyOverview();
+setInterval(loadWeeklyOverview, 10 * 60 * 1000);
+
+document.getElementById('fullscreenBtn')?.addEventListener('click', async () => {
+  try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); } catch (e) {}
+});
+
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'RCO_THEME') document.body.classList.toggle('dark', event.data.theme === 'dark');
+  if (event.data?.type === 'TV_VIEW_STATE') document.body.classList.toggle('tv-view-active', event.data.active);
+  if (event.data?.type === 'RCO_REVENUE_ACCESS' && !event.data.canSeeRevenue) { _canSeeRevenue = false; restrictRevenue(); }
+});
+</script>
+
+</body>
+</html>

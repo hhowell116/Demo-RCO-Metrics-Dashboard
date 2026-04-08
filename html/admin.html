@@ -41,11 +41,18 @@
       </div>
     </div>
 
-    <!-- Read About This Site (half width) -->
-    <div class="admin-section admin-about-section">
-      <div class="admin-section-title">Read About This Site</div>
-      <p class="admin-about-desc">Learn how the dashboard works, where the data comes from, and what each tab does.</p>
-      <button class="admin-about-btn" id="openAboutModal">View Site Overview</button>
+    <!-- Read About This Site + How We Calculate (half width each, side by side) -->
+    <div class="admin-section admin-about-section" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div>
+        <div class="admin-section-title">Read About This Site</div>
+        <p class="admin-about-desc">Learn how the dashboard works, where the data comes from, and what each tab does.</p>
+        <button class="admin-about-btn" id="openAboutModal">View Site Overview</button>
+      </div>
+      <div>
+        <div class="admin-section-title">How We Calculate Metrics</div>
+        <p class="admin-about-desc">Detailed breakdown of every data source, calculation, and update frequency per dashboard.</p>
+        <button class="admin-about-btn" id="openMethodologyModal">View Methodology</button>
+      </div>
     </div>
 
     <!-- Recent Site Access + Currently Accessing — full width, split 50/50 -->
@@ -123,10 +130,13 @@
         <li><strong>Frontend:</strong> Hosted on Firebase with Google authentication restricted to @rowecasaorganics.com accounts.</li>
         <li><strong>Authentication:</strong> The Cloudflare Worker handles automatic reauthentication of Shopify API tokens for both stores, so the connection never expires or requires manual intervention.</li>
         <li><strong>Refresh:</strong> Historical data (KPI, orders, international, top products) refreshes automatically every 6 hours via a cron job. Live dashboards (daily metrics, sales, unfulfilled, skip the line) pull fresh data from Shopify on each page load.</li>
-        <li><strong>Historical Data:</strong> Complete retail and wholesale data going back to January 2022 through present. Over 1.3 million orders processed.</li>
+        <li><strong>Historical Data:</strong> Complete retail and wholesale data going back to January 2024 through present.</li>
       </ul>
 
       <h3>Dashboard Tabs</h3>
+
+      <h4>Weekly Overview</h4>
+      <p>High-level summary of all weekly metrics across every dashboard. Shows this week's combined revenue, orders, AOV, units sold with percentage change vs last week. Includes retail/wholesale breakdown, daily breakdown table, fulfillment KPI rates, fulfillment status, skip the line snapshot, and top products for the week.</p>
 
       <h4>Fulfillment KPI</h4>
       <p>The main view. Shows daily order counts and fulfillment rates for 4-day and 7-day windows. The 4-day rate measures what percentage of orders ship within 4 business days (target: 85%). The 7-day rate is the same for 7 days (target: 95%). Toggle between Retail, Wholesale, and Total (combined). Switch between monthly table view and calendar heat map.</p>
@@ -166,6 +176,280 @@
 
       <h3>Access Control</h3>
       <p>The site uses role-based access. IT Admins have full access including the admin panel. C-Suite can see all operational dashboards with revenue. Directors and Supervisors can see dashboards but revenue is restricted. Employees can see the Shipping Leaderboard and International Orders only.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Methodology Modal -->
+<div class="admin-modal-overlay" id="methodologyModal">
+  <div class="admin-modal" style="max-width:900px;">
+    <button class="admin-modal-close" id="closeMethodologyModal">&times;</button>
+    <h2>How We Calculate &amp; Pull Metrics</h2>
+
+    <div class="admin-modal-body">
+
+      <h3>1. Weekly Overview</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Cached for 10 minutes per day (cache key includes today&rsquo;s date)</li>
+        <li>Browser auto-refreshes every 10 minutes</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>This week&rsquo;s orders: Shopify count endpoints (open + closed) + 250-order sample for AOV/units/products</li>
+        <li>Last week&rsquo;s orders: Shopify count endpoints only; revenue and units estimated from this week&rsquo;s AOV</li>
+        <li>Fulfillment KPI rates: read from KV (kpi-retail/wholesale-{year}), filtered to this/last week dates</li>
+        <li>Top Products, Unfulfilled, Skip the Line, Fulfillment Dashboard: read from existing KV caches</li>
+      </ul>
+      <h4>Calculations</h4>
+      <ul>
+        <li>Week = Monday through Sunday (current week shows Mon through today)</li>
+        <li><strong>Weekly Revenue</strong> = sample AOV &times; total order count (exact if sample &ge; total)</li>
+        <li><strong>Units Sold</strong> = sample units-per-order &times; total order count</li>
+        <li><strong>% Change vs Last Week</strong> = (this week &minus; last week) / last week &times; 100</li>
+        <li>Daily breakdown scaled proportionally if 250-order sample &lt; total orders</li>
+        <li>KPI fill rates: weighted average across all days in the week (total fulfilled / total orders)</li>
+      </ul>
+
+      <hr>
+
+      <h3>3. Fulfillment KPI</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Current month: automatic every 6 hours via cron (both Retail + Wholesale)</li>
+        <li>Previous month: also refreshed during the first 10 days of each new month so end-of-month rates settle</li>
+        <li>Browser refreshes from cache every 10 minutes</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>Shopify Admin REST API &mdash; paginates through ALL orders for the month</li>
+        <li>Both Retail (<em>rowe-casa</em>) and Wholesale (<em>wholesale-rowe-casa</em>) stores</li>
+        <li>Date filter: <strong>processed_at</strong> (matches Shopify Analytics)</li>
+        <li>Fields fetched: id, processed_at, fulfillment_status, fulfillments, cancelled_at, financial_status</li>
+      </ul>
+      <h4>Calculations</h4>
+      <ul>
+        <li><strong>Total Orders</strong> = all orders processed that day (including cancelled/refunded)</li>
+        <li><strong>Remaining (4-Day)</strong> = non-cancelled, non-refunded orders that are currently unfulfilled (fulfillment_status &ne; &ldquo;fulfilled&rdquo;)</li>
+        <li><strong>Remaining (7-Day)</strong> = same as 4-Day (both check current fulfillment status at time of refresh)</li>
+        <li><strong>4-Day Fill Rate</strong> = (Total &minus; Remaining) / Total &times; 100</li>
+        <li><strong>7-Day Fill Rate</strong> = same formula</li>
+        <li>Cancelled/refunded orders are included in the total but skipped in the remaining count (effectively counted as fulfilled)</li>
+        <li>&ldquo;Total&rdquo; dataset combines Retail + Wholesale raw counts by date, then recalculates rates</li>
+        <li>Monthly average fill rate = mean of daily rates; Avg daily orders = total orders / days with data</li>
+      </ul>
+      <h4>Why &ldquo;Current State&rdquo;?</h4>
+      <p>This matches Alisha&rsquo;s KPI spreadsheet methodology. She checks Shopify Analytics on the 4th and 7th day after each order date and counts how many are still unfulfilled at that moment. Our cron does the same &mdash; it checks the current fulfillment status of each order at refresh time. For historical months where all orders are shipped, both rates will be 100%.</p>
+
+      <hr>
+
+      <h3>4. Fulfillment Dashboard</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Fulfilled counts: computed every 30 minutes via cron, stored in KV</li>
+        <li>Unfulfilled counts: live from Shopify on each page load, cached 10 minutes</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>Unfulfilled: Shopify <code>orders/count.json</code> with status=open, fulfillment_status=unfulfilled + partial (4 API calls: 2 Retail + 2 Wholesale)</li>
+        <li>Fulfilled counts: 30-min cron paginates through shipped orders (updated_at filter), checks each order&rsquo;s fulfillment <code>created_at</code> date</li>
+      </ul>
+      <h4>Calculations</h4>
+      <ul>
+        <li><strong>Unfulfilled</strong> = unfulfilled count + partially fulfilled count (exact, live)</li>
+        <li><strong>Yesterday Fulfilled</strong> = unique orders with fulfillment_status=shipped, updated since yesterday, where any fulfillment was created yesterday</li>
+        <li><strong>Today Fulfilled</strong> = same logic for today</li>
+        <li>Counts unique orders (not individual shipments)</li>
+        <li>Yesterday&rsquo;s count is cached after midnight (it&rsquo;s static); only today&rsquo;s count recomputes every 30 min</li>
+      </ul>
+
+      <hr>
+
+      <h3>5. Shipping Leaderboards</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Pulls from a Google Sheet on page load; updates when the sheet is updated</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>Google Sheets published CSV export (manually maintained)</li>
+      </ul>
+      <h4>Calculations</h4>
+      <ul>
+        <li>None &mdash; displays values directly from sheet columns (rank, name, products shipped, orders)</li>
+      </ul>
+      <p><em>Note: Cannot be automated because the BambooHR API does not expose full-time vs part-time status, which is needed for the leaderboard categories.</em></p>
+
+      <hr>
+
+      <h3>6. Daily Metrics</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Live Shopify API calls, cached for 10 minutes</li>
+        <li>Regardless of how many users have the site open, Shopify is only called once per 10 min</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>8 Shopify API calls per refresh (4 Retail + 4 Wholesale)</li>
+        <li>Order counts (open + closed) filtered by <strong>processed_at</strong> for today</li>
+        <li>Shipped count filtered by processed_at</li>
+        <li>Full paginated fetch of all orders with total_price, line_items, financial_status</li>
+        <li>All dates in Central Time (America/Chicago)</li>
+      </ul>
+      <h4>Calculations</h4>
+      <ul>
+        <li><strong>Total Orders</strong> = open + closed count (exact, excludes cancelled)</li>
+        <li><strong>Fulfilled</strong> = shipped count (exact)</li>
+        <li><strong>Unfulfilled</strong> = Total &minus; Fulfilled</li>
+        <li><strong>Sales</strong> = sum of total_price from all orders (gift card purchases excluded, cross-day refunds subtracted)</li>
+        <li><strong>Units Sold</strong> = sum of line_item quantities, excluding non-product items (shipping protection, discount cards, etc.)</li>
+        <li><strong>AOV</strong> = Sales / Total Orders</li>
+        <li><strong>Revenue Per Unit</strong> = Sales / Units Sold</li>
+        <li><strong>Top 10 Products</strong> = ranked by quantity from all orders</li>
+      </ul>
+
+      <hr>
+
+      <h3>7. Sales</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Live Shopify API calls, cached for 10 minutes</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>14 Shopify API calls per refresh (7 Retail + 7 Wholesale)</li>
+        <li>Order counts for Today, MTD, YTD (each open + closed) via <strong>processed_at</strong></li>
+        <li>50-order sample for today&rsquo;s AOV</li>
+      </ul>
+      <h4>Calculations</h4>
+      <ul>
+        <li><strong>Today/MTD/YTD order counts</strong> = exact from Shopify (excludes cancelled)</li>
+        <li><strong>AOV</strong> = average total_price from today&rsquo;s 50-order sample (voided/refunded excluded)</li>
+        <li><strong>Today Sales</strong> = AOV &times; Today Orders (estimate)</li>
+        <li><strong>MTD Sales</strong> = AOV &times; MTD Orders (estimate &mdash; uses today&rsquo;s AOV for entire month)</li>
+        <li><strong>YTD Sales</strong> = AOV &times; YTD Orders (estimate &mdash; uses today&rsquo;s AOV for entire year)</li>
+        <li><strong>Combined YTD</strong> = Retail + Wholesale totals; Combined AOV = Combined Revenue / Combined Orders</li>
+      </ul>
+
+      <hr>
+
+      <h3>8. Top Products</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Refreshed nightly at 2 AM CT via cron</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>Shopify orders from last 7 and 30 days, both stores</li>
+        <li>Paginates through all orders in each window</li>
+      </ul>
+      <h4>Calculations</h4>
+      <ul>
+        <li>Counts total quantity per product title across all orders</li>
+        <li>Non-product items excluded (shipping protection, discount cards, gift cards, etc.)</li>
+        <li>Ranked highest to lowest by units sold, top 50 returned</li>
+      </ul>
+
+      <hr>
+
+      <h3>9. Orders Overview</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Current month refreshed nightly at 2 AM CT via cron</li>
+        <li>Historical months from backfill script (complete data, not sampled)</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>Shopify orders endpoint &mdash; fetches every order for each month from both stores</li>
+        <li>Date filter: created_at</li>
+      </ul>
+      <h4>Calculations (per month, Retail + Wholesale combined)</h4>
+      <ul>
+        <li><strong>Orders Placed</strong> = total count of all orders (including cancelled)</li>
+        <li><strong>Orders Fulfilled</strong> = count with fulfillment_status=fulfilled, excluding cancelled/refunded</li>
+        <li><strong>Fulfillment Rate</strong> = Orders Fulfilled / Orders Placed &times; 100</li>
+      </ul>
+
+      <hr>
+
+      <h3>10. Unfulfilled Orders</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Live Shopify API calls, cached for 10 minutes</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>6 Shopify API calls per refresh (3 Retail + 3 Wholesale)</li>
+        <li>Counts for unfulfilled + partially fulfilled (status=open)</li>
+        <li>Full paginated fetch of unfulfilled orders with created_at and line_items</li>
+      </ul>
+      <h4>Calculations</h4>
+      <ul>
+        <li><strong>Total Unfulfilled</strong> = unfulfilled count + partial count (exact)</li>
+        <li><strong>Date Breakdown</strong> = orders grouped by created_at date</li>
+        <li><strong>Avg Order Size</strong> = total units / order count</li>
+      </ul>
+
+      <hr>
+
+      <h3>11. International Orders</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Current year updated nightly at 2 AM CT via cron (incremental)</li>
+        <li>Full historical data from backfill script</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>Shopify orders endpoint &mdash; extracts shipping_address.country_code and province_code</li>
+        <li>Both stores, stored per year in Cloudflare KV</li>
+      </ul>
+      <h4>Calculations</h4>
+      <ul>
+        <li><strong>Country counts</strong> = number of orders shipped to each country</li>
+        <li><strong>US State counts</strong> = number of orders shipped to each US state</li>
+        <li>&ldquo;All&rdquo; years merges counts across 2024, 2025, and 2026</li>
+      </ul>
+
+      <hr>
+
+      <h3>12. Skip the Line</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Live Shopify API call, cached for 10 minutes</li>
+      </ul>
+      <h4>Data Source</h4>
+      <ul>
+        <li>1 Shopify API call &mdash; fetches open unfulfilled orders, filters for &lsquo;dyn-skip-line&rsquo; tag</li>
+      </ul>
+      <h4>Calculations</h4>
+      <ul>
+        <li><strong>Total</strong> = count of open unfulfilled orders with skip-the-line tag</li>
+        <li>Grouped by created_at date to show wait time</li>
+      </ul>
+
+      <hr>
+
+      <h3>13. Sidebar &mdash; Today&rsquo;s Orders</h3>
+      <h4>Updates</h4>
+      <ul>
+        <li>Uses the /daily-metrics cached endpoint; refreshes every 10 minutes</li>
+      </ul>
+      <h4>Calculation</h4>
+      <ul>
+        <li>Retail total orders + Wholesale total orders (same data source as Daily Metrics)</li>
+      </ul>
+
+      <hr>
+
+      <h3>General Notes</h3>
+      <ul>
+        <li><strong>All API access is READ-ONLY.</strong> The dashboard cannot modify orders, products, or any store data.</li>
+        <li><strong>All dates use Central Time</strong> (America/Chicago) with automatic DST handling.</li>
+        <li><strong>Caching:</strong> Live endpoints cache responses for 10 minutes in Cloudflare KV. Multiple users loading the page simultaneously only trigger one Shopify API call.</li>
+        <li><strong>Order counts</strong> may differ from Shopify Analytics by 2&ndash;10 orders per day. This is a documented difference between the REST API&rsquo;s processed_at filter and Shopify Analytics&rsquo; internal counting. Fulfillment rates are not affected.</li>
+        <li><strong>Non-product items</strong> excluded from unit counts: shipping protection, Navidium, discount cards, gift cards, skip the line, heat sensitive info cards.</li>
+      </ul>
+
     </div>
   </div>
 </div>
@@ -210,6 +494,7 @@ caBody.innerHTML = currentUsers.map(u => `
 
 // Build permissions matrix
 const dashboards = [
+  { id: 'weekly-overview', name: 'Weekly Overview' },
   { id: 'fulfillment', name: 'Fulfillment KPI' },
   { id: 'shipping', name: 'Shipping Leaderboards' },
   { id: 'orders', name: 'Orders Overview' },
@@ -279,6 +564,17 @@ document.getElementById('closeAboutModal').addEventListener('click', () => {
   document.getElementById('aboutModal').classList.remove('active');
 });
 document.getElementById('aboutModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
+});
+
+// Methodology modal
+document.getElementById('openMethodologyModal').addEventListener('click', () => {
+  document.getElementById('methodologyModal').classList.add('active');
+});
+document.getElementById('closeMethodologyModal').addEventListener('click', () => {
+  document.getElementById('methodologyModal').classList.remove('active');
+});
+document.getElementById('methodologyModal').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
 });
 </script>

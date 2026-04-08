@@ -72,6 +72,7 @@
     </div>
 
     <div class="sidebar-nav">
+      <button class="nav-btn" data-tab="weekly-overview">Weekly Overview</button>
       <button class="nav-btn active" data-tab="fulfillment">Fulfillment KPI</button>
       <button class="nav-btn" data-tab="shipping">Shipping Leaderboards</button>
       <button class="nav-btn" data-tab="orders">Orders Overview</button>
@@ -123,6 +124,9 @@
   </aside>
 
   <main class="content-area">
+    <div id="weekly-overview-frame" class="iframe-wrapper">
+      <iframe src="html/weekly-overview.html"></iframe>
+    </div>
     <div id="fulfillment-frame" class="iframe-wrapper active">
       <iframe src="html/fulfillment.html"></iframe>
     </div>
@@ -310,6 +314,7 @@ function withTvFade(workFn, holdMs = 320){
 }
 
 const TV_PLAYLIST = [
+  { tab: 'weekly-overview' },
   { tab: 'fulfillment', command: { type:'TV_ACTION', target:'fulfillment', dataset:'retail', view:'monthly' } },
   { tab: 'fulfillment', command: { type:'TV_ACTION', target:'fulfillment', dataset:'retail', view:'calendar' } },
   { tab: 'fulfillment', command: { type:'TV_ACTION', target:'fulfillment', dataset:'wholesale', view:'monthly' } },
@@ -464,6 +469,13 @@ document.addEventListener('fullscreenchange', () => {
       target: '.sidebar',
       title: 'Navigation Sidebar',
       desc: 'This is your main menu. Click any tab to switch between dashboards. The sidebar also shows today\'s live order count at the bottom.',
+      position: 'right',
+    },
+    {
+      target: '[data-tab="weekly-overview"]',
+      title: 'Weekly Overview',
+      desc: 'High-level summary of all weekly metrics across every dashboard — revenue, orders, fulfillment rates, top products, and more. Compares this week vs last week.',
+      tab: 'weekly-overview',
       position: 'right',
     },
     {
