@@ -1,8 +1,14 @@
 # RCO Metrics Dashboard (Demo)
 
-Static demo version of the RCO Metrics Dashboard for portfolio display. The production version is a full-stack operations platform pulling live data from two Shopify stores via a Cloudflare Worker API backend.
+> **This repo is for demo purposes only.** All API calls are replaced with static sample data and authentication is removed.
 
-**Live Demo:** [hhowell116.github.io/Demo-RCO-Metrics-Dashboard](https://hhowell116.github.io/Demo-RCO-Metrics-Dashboard/)
+**View the demo site:** [hhowell116.github.io/Demo-RCO-Metrics-Dashboard](https://hhowell116.github.io/Demo-RCO-Metrics-Dashboard/)
+
+**View the real project code:** [github.com/hhowell116/RCO-Metrics](https://github.com/hhowell116/RCO-Metrics)
+
+---
+
+The production version is a full-stack operations platform pulling live data from two Shopify stores via a Cloudflare Worker API backend.
 
 ## Production Architecture
 
