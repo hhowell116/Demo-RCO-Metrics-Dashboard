@@ -33,6 +33,7 @@ Browser  →  Firebase Auth (Google SSO, @rowecasaorganics.com only)
 
 | Dashboard | Description |
 |-----------|-------------|
+| Weekly Overview | Combined weekly KPIs — revenue, orders, AOV, fulfillment rates, top products/states for Retail + Wholesale |
 | Fulfillment KPI | Daily order counts, 4-day and 7-day fill rates, calendar heat map |
 | Shipping Leaderboard | Employee rankings by products shipped (Full-Time, Part-Time, Wholesale) |
 | Daily Metrics | Today's sales, orders, AOV, units, fulfillment progress (Retail + Wholesale) |
@@ -80,6 +81,35 @@ Permission toggles in the Admin Panel let IT Admins adjust which dashboards each
 | jsvectormap | Interactive choropleth maps |
 | Python | Backfill scripts for historical data (2022-2026) |
 | JavaScript / HTML / CSS | Frontend dashboards |
+
+## How the Data Works
+
+### Caching & Refresh Strategy
+- **Live dashboards** (Daily Metrics, Sales, Unfulfilled, Skip the Line) fetch from Shopify on each page load, cached 10 minutes in Cloudflare KV — multiple concurrent users trigger only one API call
+- **Historical dashboards** (Fulfillment KPI, Orders Overview, Top Products, International) refresh via automated cron jobs every 6 hours, with nightly backfills at 2 AM CT
+- **Fulfillment counts** (Today/Yesterday Fulfilled) recompute every 30 minutes via cron
+
+### Revenue & Order Calculations
+- **Order counts** are exact from Shopify count endpoints (open + closed, excludes cancelled)
+- **Revenue/AOV** are calculated from a 250-order sample, then scaled to the total order count — exact when the sample covers all orders
+- **Gift card line items** are excluded from revenue, and cross-day refunds are subtracted to match Shopify Analytics
+- **Units Sold** excludes non-product items (shipping protection, discount cards, gift cards, etc.)
+
+### Fulfillment KPI Methodology
+- **4-Day Fill Rate** = percentage of orders fulfilled within 4 days, calculated as (Total − Remaining Unfulfilled) / Total
+- Rates are computed by checking each order's **current** fulfillment status at refresh time — this matches the warehouse team's manual spreadsheet methodology where they check Shopify on day 4 and day 7 after each order date
+- For historical months where all orders have shipped, both 4-day and 7-day rates converge to 100%
+- The "Total" dataset combines Retail + Wholesale raw counts by date, then recalculates rates
+
+### Weekly Overview
+- Shows the **previous completed week** (Monday–Sunday) with Retail vs Wholesale comparison
+- Daily breakdown uses exact KPI data per day, not the 250-order sample
+- Fulfillment snapshot, unfulfilled counts, and skip-the-line data are pulled from their respective KV caches
+
+### General Notes
+- All API access is **READ-ONLY** — the dashboard cannot modify orders, products, or store data
+- All dates use **Central Time** (America/Chicago) with automatic DST handling
+- Order counts may differ from Shopify Analytics by 2–10 orders/day due to a documented difference between the REST API's `processed_at` filter and Shopify Analytics' internal counting
 
 ## About This Demo
 
